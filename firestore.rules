@@ -1,0 +1,33 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helper ──────────────────────────────────────────────────────────────
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function callerEmail() {
+      return request.auth.token.email;
+    }
+
+    // ── clients collection ───────────────────────────────────────────────────
+    // A client may only read their own record (matched by email field)
+    match /clients/{clientId} {
+      allow read: if isAuthenticated() && resource.data.email == callerEmail();
+      allow write: if false;
+    }
+
+    // ── tasks collection ─────────────────────────────────────────────────────
+    // A client may only read tasks where clientEmail matches their auth email
+    match /tasks/{taskId} {
+      allow read: if isAuthenticated() && resource.data.clientEmail == callerEmail();
+      allow write: if false;
+    }
+
+    // ── Deny everything else ─────────────────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
