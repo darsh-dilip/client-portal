@@ -1,102 +1,93 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
-import { logEvent } from '../hooks/useAuditLog';
-import { LayoutDashboard, FileText, Receipt, TrendingUp, Calendar, LogOut, Menu, BarChart2 } from 'lucide-react';
+import { useAuditLog } from '../hooks/useAuditLog';
+import { LayoutDashboard, GitBranch, Receipt, TrendingUp, FileText, Calendar, ListChecks, ShieldCheck, FileStack, Bell, LogOut } from 'lucide-react';
 
 const NAV = [
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard',   event: 'VIEW_DASHBOARD' },
-  { to: '/timeline',  icon: BarChart2,       label: 'Timeline',    event: 'VIEW_TIMELINE'  },
-  { to: '/gst',       icon: Receipt,         label: 'GST Filings', event: 'VIEW_GST'       },
-  { to: '/it',        icon: TrendingUp,      label: 'Income Tax',  event: 'VIEW_IT'        },
-  { to: '/tds',       icon: FileText,        label: 'TDS Returns', event: 'VIEW_TDS'       },
-  { to: '/calendar',  icon: Calendar,        label: 'Calendar',    event: 'VIEW_CALENDAR'  },
+  { path: '/dashboard',  label: 'Dashboard',       icon: <LayoutDashboard size={16}/>,  event: 'VIEW_DASHBOARD' },
+  { path: '/timeline',   label: 'Timeline',         icon: <GitBranch size={16}/>,        event: 'VIEW_TIMELINE'  },
+  { path: '/gst',        label: 'GST Filings',      icon: <Receipt size={16}/>,          event: 'VIEW_GST'       },
+  { path: '/it',         label: 'Income Tax',       icon: <TrendingUp size={16}/>,       event: 'VIEW_IT'        },
+  { path: '/tds',        label: 'TDS Returns',      icon: <FileText size={16}/>,         event: 'VIEW_TDS'       },
+  { path: '/calendar',   label: 'Calendar',         icon: <Calendar size={16}/>,         event: 'VIEW_CALENDAR'  },
+  { path: '/all-tasks',  label: 'All Tasks',        icon: <ListChecks size={16}/>,       event: 'VIEW_ALL_TASKS' },
+  { path: '/health',     label: 'Health',           icon: <ShieldCheck size={16}/>,      event: 'VIEW_HEALTH'    },
+  { path: '/documents',  label: 'Documents',        icon: <FileStack size={16}/>,        event: 'VIEW_DOCS'      },
+  { path: '/alerts',     label: 'Alerts',           icon: <Bell size={16}/>,             event: 'VIEW_ALERTS'    },
 ];
 
-export default function Layout({ user, client, children }) {
-  const [open, setOpen] = useState(false);
+export default function Layout({ children, user, client }) {
   const navigate  = useNavigate();
   const location  = useLocation();
-
-  useEffect(() => {
-    const route = location.pathname.replace('/', '').toUpperCase() || 'DASHBOARD';
-    logEvent(user, `VIEW_${route}`, location.pathname);
-  }, [location.pathname, user]);
+  const { logEvent } = useAuditLog();
 
   async function handleLogout() {
-    await logEvent(user, 'LOGOUT', 'Client signed out');
+    await logEvent('LOGOUT', { detail: 'Client signed out' });
     await signOut(auth);
     navigate('/login');
   }
 
-  const initials = (client?.name || user?.email || '?')
-    .split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
-
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
-      {open && <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', zIndex: 40 }} />}
-
-      <aside style={{ width: 240, background: 'var(--navy-mid)', borderRight: '1px solid rgba(201,168,76,.1)', display: 'flex', flexDirection: 'column', padding: '1.5rem 0', position: 'fixed', top: 0, bottom: 0, left: 0, zIndex: 50 }}
-        className={`sidebar ${open ? 'open' : ''}`}>
-
-        <div style={{ padding: '0 1.5rem 1.5rem', borderBottom: '1px solid rgba(201,168,76,.1)' }}>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.3rem', color: 'var(--gold)' }}>ComplianceDesk</div>
-          <div style={{ fontSize: '.72rem', color: 'var(--slate)', marginTop: '.2rem', letterSpacing: '.08em', textTransform: 'uppercase' }}>Client Portal</div>
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--navy)' }}>
+      {/* ── Sidebar ─────────────────────────────────────────────── */}
+      <aside style={{ width: 196, flexShrink: 0, background: 'var(--navy-mid)', borderRight: '1px solid rgba(201,168,76,.08)', display: 'flex', flexDirection: 'column', padding: '1.25rem 0' }}>
+        {/* Logo */}
+        <div style={{ padding: '0 1.1rem 1rem', borderBottom: '1px solid rgba(201,168,76,.08)' }}>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', color: 'var(--gold)' }}>ComplianceDesk</div>
+          <div style={{ fontSize: '.65rem', color: 'var(--slate)', marginTop: '.1rem', textTransform: 'uppercase', letterSpacing: '.08em' }}>Client Portal</div>
         </div>
 
-        <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(201,168,76,.08)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem' }}>
-            <div style={{ width: 38, height: 38, background: 'linear-gradient(135deg, var(--gold-dim), var(--gold))', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '.8rem', fontWeight: 600, color: 'var(--navy)', flexShrink: 0 }}>
-              {initials}
+        {/* User info */}
+        <div style={{ padding: '.85rem 1.1rem', borderBottom: '1px solid rgba(201,168,76,.06)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.55rem' }}>
+            <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, var(--gold-dim), var(--gold))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '.68rem', fontWeight: 700, color: 'var(--navy)', flexShrink: 0 }}>
+              {(client?.name || user?.displayName || user?.email || 'C')[0].toUpperCase()}
             </div>
-            <div style={{ overflow: 'hidden' }}>
-              <div style={{ fontSize: '.85rem', fontWeight: 500, color: 'var(--cream)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{client?.name || 'Client'}</div>
-              <div style={{ fontSize: '.72rem', color: 'var(--slate)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.email}</div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: '.8rem', color: 'var(--cream)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {client?.name || user?.displayName || 'Client'}
+              </div>
+              <div style={{ fontSize: '.65rem', color: 'var(--slate)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.email}</div>
             </div>
           </div>
         </div>
 
-        <nav style={{ flex: 1, padding: '1rem 0', overflowY: 'auto' }}>
-          {NAV.map(({ to, icon: Icon, label }) => (
-            <NavLink key={to} to={to} onClick={() => setOpen(false)}
+        {/* Nav */}
+        <nav style={{ flex: 1, padding: '.75rem 0', overflowY: 'auto' }}>
+          {NAV.map(item => (
+            <NavLink key={item.path} to={item.path}
+              onClick={() => logEvent(item.event, { path: item.path })}
               style={({ isActive }) => ({
-                display: 'flex', alignItems: 'center', gap: '.75rem', padding: '.7rem 1.5rem',
-                fontSize: '.88rem', fontWeight: isActive ? 600 : 400,
+                display: 'flex', alignItems: 'center', gap: '.6rem',
+                padding: '.55rem 1.1rem',
+                fontSize: '.8rem',
                 color: isActive ? 'var(--gold)' : 'var(--slate-light)',
                 background: isActive ? 'rgba(201,168,76,.08)' : 'transparent',
                 borderLeft: isActive ? '2px solid var(--gold)' : '2px solid transparent',
+                textDecoration: 'none',
+                fontWeight: isActive ? 600 : 400,
                 transition: 'all .15s',
               })}>
-              <Icon size={16}/>{label}
+              {item.icon}{item.label}
             </NavLink>
           ))}
         </nav>
 
-        <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid rgba(201,168,76,.08)' }}>
-          <button onClick={handleLogout} className="btn btn-outline" style={{ width: '100%', justifyContent: 'flex-start', gap: '.6rem', fontSize: '.85rem' }}>
-            <LogOut size={15}/> Sign Out
+        {/* Sign out */}
+        <div style={{ padding: '.85rem 1.1rem', borderTop: '1px solid rgba(201,168,76,.08)' }}>
+          <button onClick={handleLogout}
+            style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '.6rem', padding: '.5rem .6rem', background: 'none', border: '1px solid rgba(255,255,255,.07)', borderRadius: 'var(--radius-sm)', color: 'var(--slate)', cursor: 'pointer', fontSize: '.78rem', fontFamily: 'var(--font-body)' }}>
+            <LogOut size={13}/> Sign Out
           </button>
         </div>
       </aside>
 
-      <div style={{ flex: 1, marginLeft: 240, display: 'flex', flexDirection: 'column', minWidth: 0 }} className="main-content">
-        <header style={{ display: 'none', alignItems: 'center', padding: '1rem 1.25rem', borderBottom: '1px solid rgba(201,168,76,.1)', background: 'var(--navy-mid)' }} className="mobile-header">
-          <button onClick={() => setOpen(true)} style={{ background: 'none', border: 'none', color: 'var(--cream)', cursor: 'pointer' }}><Menu size={22}/></button>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', color: 'var(--gold)', marginLeft: '.75rem' }}>ComplianceDesk</div>
-        </header>
-        <main style={{ flex: 1, padding: '2rem', overflowY: 'auto' }}>{children}</main>
-      </div>
-
-      <style>{`
-        @media (max-width: 768px) {
-          .sidebar { transform: translateX(-100%); transition: transform .25s; }
-          .sidebar.open { transform: translateX(0); }
-          .main-content { margin-left: 0 !important; }
-          .mobile-header { display: flex !important; }
-          main { padding: 1.25rem !important; }
-        }
-      `}</style>
+      {/* ── Main content ─────────────────────────────────────────── */}
+      <main style={{ flex: 1, padding: '1.75rem 2rem', overflowY: 'auto', minWidth: 0 }}>
+        {children}
+      </main>
     </div>
   );
 }
