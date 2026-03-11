@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 
-export function useIsAdmin(user) {
+export function useAdmin(user) {
   const [isAdmin,  setIsAdmin]  = useState(false);
   const [loading,  setLoading]  = useState(true);
 
