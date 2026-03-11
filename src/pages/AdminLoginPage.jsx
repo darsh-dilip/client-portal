@@ -69,27 +69,48 @@ export default function AdminLoginPage() {
           }}>{errMsg}</div>
         )}
 
-        <form onSubmit={handleLogin}>
-          <label style={{ display: 'block', marginBottom: '.4rem', fontSize: '.78rem', color: 'var(--slate)', textTransform: 'uppercase', letterSpacing: '.05em' }}>
+        <form onSubmit={handleLogin} autoComplete="on">
+          <label htmlFor="admin-email" style={{ display: 'block', marginBottom: '.4rem', fontSize: '.78rem', color: 'var(--slate)', textTransform: 'uppercase', letterSpacing: '.05em' }}>
             Admin Email
           </label>
           <div style={{ position: 'relative', marginBottom: '1rem' }}>
             <Mail size={14} style={{ position: 'absolute', left: '.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--slate)' }} />
-            <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
-              placeholder="admin@yourfirm.com" style={{ paddingLeft: '2.3rem' }} />
+            <input
+              id="admin-email"
+              name="email"
+              type="email"
+              required
+              autoComplete="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder="admin@yourfirm.com"
+              style={{ paddingLeft: '2.3rem' }}
+            />
           </div>
 
-          <label style={{ display: 'block', marginBottom: '.4rem', fontSize: '.78rem', color: 'var(--slate)', textTransform: 'uppercase', letterSpacing: '.05em' }}>
+          <label htmlFor="admin-password" style={{ display: 'block', marginBottom: '.4rem', fontSize: '.78rem', color: 'var(--slate)', textTransform: 'uppercase', letterSpacing: '.05em' }}>
             Password
           </label>
           <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
             <Lock size={14} style={{ position: 'absolute', left: '.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--slate)' }} />
-            <input type="password" required value={pass} onChange={e => setPass(e.target.value)}
-              placeholder="••••••••" style={{ paddingLeft: '2.3rem' }} />
+            <input
+              id="admin-password"
+              name="password"
+              type="password"
+              required
+              autoComplete="current-password"
+              value={pass}
+              onChange={e => setPass(e.target.value)}
+              placeholder="••••••••"
+              style={{ paddingLeft: '2.3rem' }}
+            />
           </div>
 
           <button type="submit" className="btn btn-gold" style={{ width: '100%' }} disabled={loading}>
-            {loading ? <><div className="spinner" style={{width:16,height:16}}/> Signing in…</> : 'Sign In to Admin Panel'}
+            {loading
+              ? <><div className="spinner" style={{ width: 16, height: 16 }} /> Signing in…</>
+              : 'Sign In to Admin Panel'
+            }
           </button>
         </form>
 
