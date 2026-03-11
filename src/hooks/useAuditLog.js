@@ -1,7 +1,7 @@
 import { collection, addDoc, query, orderBy, limit, getDocs, where, serverTimestamp } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db, auth } from '../firebase';
 
-// ── Write an audit event ───────────────────────────────────────────────────
+// ── Plain async helper (usable anywhere) ─────────────────────────────────
 export async function logEvent(user, event, detail = '') {
   if (!user?.email) return;
   try {
@@ -9,18 +9,27 @@ export async function logEvent(user, event, detail = '') {
       email:     user.email,
       name:      user.displayName || user.email,
       uid:       user.uid,
-      event,               // e.g. "LOGIN", "VIEW_DASHBOARD", "VIEW_GST"
-      detail,              // extra context
+      event,
+      detail:    typeof detail === 'string' ? detail : JSON.stringify(detail),
       timestamp: serverTimestamp(),
       userAgent: navigator.userAgent,
     });
   } catch (e) {
-    // Silently fail — never break the app for audit errors
     console.warn('Audit log failed:', e.message);
   }
 }
 
-// ── Read audit logs (admin) ────────────────────────────────────────────────
+// ── React hook — returns a bound logEvent that auto-injects the current user
+export function useAuditLog(user) {
+  // Accept user as param, or fall back to auth.currentUser
+  function log(event, detail = '') {
+    const u = user || auth.currentUser;
+    return logEvent(u, event, detail);
+  }
+  return { logEvent: log };
+}
+
+// ── Admin: read all audit logs ────────────────────────────────────────────
 export async function fetchAllAuditLogs(limitCount = 200) {
   const q = query(
     collection(db, 'auditLogs'),
@@ -31,7 +40,7 @@ export async function fetchAllAuditLogs(limitCount = 200) {
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
-// ── Read own audit logs (client) ───────────────────────────────────────────
+// ── Client: read own audit logs ───────────────────────────────────────────
 export async function fetchMyAuditLogs(email, limitCount = 30) {
   const q = query(
     collection(db, 'auditLogs'),
