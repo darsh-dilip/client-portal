@@ -1,30 +1,30 @@
 import React from 'react';
-import { NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { useAuditLog } from '../hooks/useAuditLog';
 import { LayoutDashboard, GitBranch, Receipt, TrendingUp, FileText, Calendar, ListChecks, ShieldCheck, FileStack, Bell, LogOut } from 'lucide-react';
 
 const NAV = [
-  { path: '/dashboard',  label: 'Dashboard',       icon: <LayoutDashboard size={16}/>,  event: 'VIEW_DASHBOARD' },
-  { path: '/timeline',   label: 'Timeline',         icon: <GitBranch size={16}/>,        event: 'VIEW_TIMELINE'  },
-  { path: '/gst',        label: 'GST Filings',      icon: <Receipt size={16}/>,          event: 'VIEW_GST'       },
-  { path: '/it',         label: 'Income Tax',       icon: <TrendingUp size={16}/>,       event: 'VIEW_IT'        },
-  { path: '/tds',        label: 'TDS Returns',      icon: <FileText size={16}/>,         event: 'VIEW_TDS'       },
-  { path: '/calendar',   label: 'Calendar',         icon: <Calendar size={16}/>,         event: 'VIEW_CALENDAR'  },
-  { path: '/all-tasks',  label: 'All Tasks',        icon: <ListChecks size={16}/>,       event: 'VIEW_ALL_TASKS' },
-  { path: '/health',     label: 'Health',           icon: <ShieldCheck size={16}/>,      event: 'VIEW_HEALTH'    },
-  { path: '/documents',  label: 'Documents',        icon: <FileStack size={16}/>,        event: 'VIEW_DOCS'      },
-  { path: '/alerts',     label: 'Alerts',           icon: <Bell size={16}/>,             event: 'VIEW_ALERTS'    },
+  { path: '/dashboard', label: 'Dashboard',  icon: <LayoutDashboard size={16}/>, event: 'VIEW_DASHBOARD' },
+  { path: '/timeline',  label: 'Timeline',   icon: <GitBranch size={16}/>,       event: 'VIEW_TIMELINE'  },
+  { path: '/gst',       label: 'GST Filings',icon: <Receipt size={16}/>,         event: 'VIEW_GST'       },
+  { path: '/it',        label: 'Income Tax', icon: <TrendingUp size={16}/>,      event: 'VIEW_IT'        },
+  { path: '/tds',       label: 'TDS Returns',icon: <FileText size={16}/>,        event: 'VIEW_TDS'       },
+  { path: '/calendar',  label: 'Calendar',   icon: <Calendar size={16}/>,        event: 'VIEW_CALENDAR'  },
+  { path: '/all-tasks', label: 'All Tasks',  icon: <ListChecks size={16}/>,      event: 'VIEW_ALL_TASKS' },
+  { path: '/health',    label: 'Health',     icon: <ShieldCheck size={16}/>,     event: 'VIEW_HEALTH'    },
+  { path: '/documents', label: 'Documents',  icon: <FileStack size={16}/>,       event: 'VIEW_DOCS'      },
+  { path: '/alerts',    label: 'Alerts',     icon: <Bell size={16}/>,            event: 'VIEW_ALERTS'    },
 ];
 
 export default function Layout({ children, user, client }) {
-  const navigate  = useNavigate();
-  const location  = useLocation();
-  const { logEvent } = useAuditLog();
+  const navigate = useNavigate();
+  // FIX: pass user so logEvent can auto-bind it
+  const { logEvent } = useAuditLog(user);
 
   async function handleLogout() {
-    await logEvent('LOGOUT', { detail: 'Client signed out' });
+    await logEvent('LOGOUT', 'Client signed out');
     await signOut(auth);
     navigate('/login');
   }
@@ -58,7 +58,7 @@ export default function Layout({ children, user, client }) {
         <nav style={{ flex: 1, padding: '.75rem 0', overflowY: 'auto' }}>
           {NAV.map(item => (
             <NavLink key={item.path} to={item.path}
-              onClick={() => logEvent(item.event, { path: item.path })}
+              onClick={() => logEvent(item.event, item.path)}
               style={({ isActive }) => ({
                 display: 'flex', alignItems: 'center', gap: '.6rem',
                 padding: '.55rem 1.1rem',
@@ -84,7 +84,7 @@ export default function Layout({ children, user, client }) {
         </div>
       </aside>
 
-      {/* ── Main content ─────────────────────────────────────────── */}
+      {/* ── Main ────────────────────────────────────────────────── */}
       <main style={{ flex: 1, padding: '1.75rem 2rem', overflowY: 'auto', minWidth: 0 }}>
         {children}
       </main>
