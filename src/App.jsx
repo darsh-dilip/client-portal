@@ -1,8 +1,5 @@
 import React from 'react';
-import {
-  BrowserRouter, Routes, Route, Navigate, useLocation
-} from 'react-router-dom';
-import { isSignInWithEmailLink } from 'firebase/auth';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { auth } from './firebase';
 import { useAuth } from './hooks/useAuth';
 import { useClientData } from './hooks/useClientData';
@@ -12,17 +9,14 @@ import DashboardPage from './pages/DashboardPage';
 import { GSTPage, ITPage, TDSPage } from './pages/FilingPages';
 import CalendarPage from './pages/CalendarPage';
 
-// ── Auth guard ──────────────────────────────────────────────
 function RequireAuth({ children }) {
   const { user, loading } = useAuth();
   const location = useLocation();
-
   if (loading) return <FullPageLoader />;
   if (!user)   return <Navigate to="/login" state={{ from: location }} replace />;
   return children;
 }
 
-// ── Authenticated shell: fetches data once and passes down ──
 function AuthenticatedApp() {
   const { user, loading: authLoading } = useAuth();
   const { tasks, client, loading: dataLoading, error } = useClientData(user?.email);
@@ -30,10 +24,10 @@ function AuthenticatedApp() {
   if (authLoading || dataLoading) return <FullPageLoader />;
 
   if (error) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#e87070', padding: '2rem', textAlign: 'center' }}>
+    <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', color:'#e87070', padding:'2rem', textAlign:'center' }}>
       <div>
-        <div style={{ fontSize: '1.2rem', marginBottom: '.5rem' }}>Unable to load data</div>
-        <div style={{ fontSize: '.85rem', color: 'var(--slate)' }}>{error}</div>
+        <div style={{ fontSize:'1.2rem', marginBottom:'.5rem' }}>Unable to load data</div>
+        <div style={{ fontSize:'.85rem', color:'var(--slate)' }}>{error}</div>
       </div>
     </div>
   );
@@ -53,18 +47,12 @@ function AuthenticatedApp() {
 }
 
 export default function App() {
-  // If the URL is a magic-link callback, render Login so it can handle it
-  const isMagicLink = isSignInWithEmailLink(auth, window.location.href);
-
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login"         element={<LoginPage />} />
-        <Route path="/auth/callback" element={<LoginPage />} />
+        <Route path="/login" element={<LoginPage />} />
         <Route path="/*" element={
-          isMagicLink
-            ? <LoginPage />
-            : <RequireAuth><AuthenticatedApp /></RequireAuth>
+          <RequireAuth><AuthenticatedApp /></RequireAuth>
         } />
       </Routes>
     </BrowserRouter>
@@ -73,22 +61,8 @@ export default function App() {
 
 function FullPageLoader() {
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: '1.25rem',
-      background: 'var(--navy)',
-    }}>
-      <div style={{
-        fontFamily: 'var(--font-display)',
-        fontSize: '1.4rem',
-        color: 'var(--gold)',
-      }}>
-        ComplianceDesk
-      </div>
+    <div style={{ minHeight:'100vh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'1.25rem', background:'var(--navy)' }}>
+      <div style={{ fontFamily:'var(--font-display)', fontSize:'1.4rem', color:'var(--gold)' }}>ComplianceDesk</div>
       <div className="spinner" />
     </div>
   );
