@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase';
 import { useAdmin } from './hooks/useAdmin';
@@ -20,9 +20,7 @@ import DocumentsPage  from './pages/DocumentsPage';
 import AlertsPage     from './pages/AlertsPage';
 
 function ClientApp({ user }) {
-  // FIX: pass user.email (string), not the whole user object
   const { client, tasks, loading, error } = useClientData(user?.email);
-  // FIX: pass user into the hook so logEvent has access to it
   const { logEvent } = useAuditLog(user);
 
   useEffect(() => {
@@ -79,10 +77,12 @@ function AdminApp({ user }) {
   );
 }
 
-export default function App() {
+// Inner component — must be inside BrowserRouter to use routing hooks
+function AppRoutes() {
   const [user,    setUser]    = useState(undefined);
   const [checked, setChecked] = useState(false);
-  const isAdmin = useAdmin(user);
+  // FIX: destructure correctly — useAdmin returns { isAdmin, loading }
+  const { isAdmin } = useAdmin(user);
 
   useEffect(() => {
     return onAuthStateChanged(auth, u => {
@@ -120,5 +120,14 @@ export default function App() {
         }
       />
     </Routes>
+  );
+}
+
+// FIX: BrowserRouter wraps everything so Routes/useNavigate work everywhere
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppRoutes />
+    </BrowserRouter>
   );
 }
