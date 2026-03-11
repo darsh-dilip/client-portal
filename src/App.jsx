@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { auth } from './firebase';
 import { useAuth } from './hooks/useAuth';
+import { useAdmin } from './hooks/useAdmin';
 import { useClientData } from './hooks/useClientData';
 import { logEvent } from './hooks/useAuditLog';
 import Layout from './components/Layout';
@@ -12,13 +13,6 @@ import DashboardPage from './pages/DashboardPage';
 import { GSTPage, ITPage, TDSPage } from './pages/FilingPages';
 import CalendarPage from './pages/CalendarPage';
 
-// ── Admins collection — add their UIDs in Firestore ────────────────────────
-const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase());
-
-function isAdmin(user) {
-  return user && ADMIN_EMAILS.includes(user.email?.toLowerCase());
-}
-
 function RequireAuth({ children }) {
   const { user, loading } = useAuth();
   const location = useLocation();
@@ -28,9 +22,10 @@ function RequireAuth({ children }) {
 }
 
 function RequireAdmin({ children }) {
-  const { user, loading } = useAuth();
-  if (loading) return <FullPageLoader />;
-  if (!user || !isAdmin(user)) return <Navigate to="/admin/login" replace />;
+  const { user, loading: authLoading } = useAuth();
+  const { isAdmin, loading: adminLoading } = useAdmin(user);
+  if (authLoading || adminLoading) return <FullPageLoader />;
+  if (!user || !isAdmin) return <Navigate to="/admin/login" replace />;
   return children;
 }
 
@@ -38,26 +33,21 @@ function AuthenticatedApp() {
   const { user, loading: authLoading } = useAuth();
   const { tasks, client, loading: dataLoading, error } = useClientData(user?.email);
 
-  // ── Log LOGIN once on mount ─────────────────────────────────
   useEffect(() => {
-    if (user) logEvent(user, 'LOGIN', `Signed in via Google`);
+    if (user) logEvent(user, 'LOGIN', 'Signed in via Google');
   }, [user?.uid]);
 
   if (authLoading || dataLoading) return <FullPageLoader />;
 
   if (error) return (
-    <ErrorScreen
-      title="Connection Error"
-      message={error}
-      email={user?.email}
-    />
+    <ErrorScreen title="Connection Error" message={error} email={user?.email} />
   );
 
   if (!client) return (
     <ErrorScreen
       title="Account Not Found"
       email={user?.email}
-      message={`No client profile found for ${user?.email}. Please ask your CA to add this exact email to your client record in the system.`}
+      message={`No client profile found for ${user?.email}. Please ask your CA to add this exact email to your client record.`}
     />
   );
 
@@ -75,33 +65,26 @@ function AuthenticatedApp() {
   );
 }
 
+function AdminPanelWrapper() {
+  const { user } = useAuth();
+  return <AdminPanel user={user} />;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public */}
         <Route path="/login"       element={<LoginPage />} />
         <Route path="/admin/login" element={<AdminLoginPage />} />
-
-        {/* Admin */}
         <Route path="/admin" element={
-          <RequireAdmin>
-            <AdminPanelWrapper />
-          </RequireAdmin>
+          <RequireAdmin><AdminPanelWrapper /></RequireAdmin>
         } />
-
-        {/* Client portal */}
         <Route path="/*" element={
           <RequireAuth><AuthenticatedApp /></RequireAuth>
         } />
       </Routes>
     </BrowserRouter>
   );
-}
-
-function AdminPanelWrapper() {
-  const { user } = useAuth();
-  return <AdminPanel user={user} />;
 }
 
 function ErrorScreen({ title, message, email }) {
