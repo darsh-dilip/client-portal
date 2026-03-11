@@ -1,31 +1,35 @@
 import React, { useEffect, useState } from 'react';
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase';
 import { useAdmin } from './hooks/useAdmin';
 import { useClientData } from './hooks/useClientData';
 import { useAuditLog } from './hooks/useAuditLog';
 
-import Layout        from './components/Layout';
-import LoginPage     from './pages/LoginPage';
+import Layout         from './components/Layout';
+import LoginPage      from './pages/LoginPage';
 import AdminLoginPage from './pages/AdminLoginPage';
-import AdminPanel    from './pages/AdminPanel';
-import DashboardPage from './pages/DashboardPage';
+import AdminPanel     from './pages/AdminPanel';
+import DashboardPage  from './pages/DashboardPage';
 import { GSTPage, ITPage, TDSPage } from './pages/FilingPages';
-import CalendarPage  from './pages/CalendarPage';
-import TimelinePage  from './pages/TimelinePage';
-import AllTasksPage  from './pages/AllTasksPage';
-import HealthPage    from './pages/HealthPage';
-import DocumentsPage from './pages/DocumentsPage';
-import AlertsPage    from './pages/AlertsPage';
+import CalendarPage   from './pages/CalendarPage';
+import TimelinePage   from './pages/TimelinePage';
+import AllTasksPage   from './pages/AllTasksPage';
+import HealthPage     from './pages/HealthPage';
+import DocumentsPage  from './pages/DocumentsPage';
+import AlertsPage     from './pages/AlertsPage';
 
 function ClientApp({ user }) {
-  const { client, tasks, loading, error } = useClientData(user);
-  const { logEvent } = useAuditLog();
+  // FIX: pass user.email (string), not the whole user object
+  const { client, tasks, loading, error } = useClientData(user?.email);
+  // FIX: pass user into the hook so logEvent has access to it
+  const { logEvent } = useAuditLog(user);
 
   useEffect(() => {
-    if (user && !loading) logEvent('LOGIN', { detail: 'Session started' });
-  }, [user, loading]);
+    if (user && !loading && tasks.length >= 0) {
+      logEvent('LOGIN', 'Session started');
+    }
+  }, [user?.uid, loading]);
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--navy)' }}>
@@ -41,7 +45,9 @@ function ClientApp({ user }) {
       <div style={{ textAlign: 'center', maxWidth: 400, padding: '2rem' }}>
         <div style={{ fontSize: '1.5rem', color: '#e87070', marginBottom: '.75rem' }}>⚠️ Access Error</div>
         <p style={{ color: 'var(--slate)' }}>{error}</p>
-        <p style={{ color: 'var(--slate)', fontSize: '.82rem', marginTop: '.75rem' }}>Make sure your email is registered as a client. Contact your CA if this persists.</p>
+        <p style={{ color: 'var(--slate)', fontSize: '.82rem', marginTop: '.75rem' }}>
+          Make sure your email is registered as a client. Contact your CA if this persists.
+        </p>
       </div>
     </div>
   );
@@ -74,7 +80,7 @@ function AdminApp({ user }) {
 }
 
 export default function App() {
-  const [user,    setUser]    = useState(undefined); // undefined = loading
+  const [user,    setUser]    = useState(undefined);
   const [checked, setChecked] = useState(false);
   const isAdmin = useAdmin(user);
 
@@ -93,19 +99,23 @@ export default function App() {
 
   return (
     <Routes>
-      <Route path="/login"       element={!user ? <LoginPage />      : <Navigate to="/dashboard" replace />} />
-      <Route path="/admin/login" element={!user ? <AdminLoginPage /> : <Navigate to="/admin" replace />} />
+      <Route path="/login"
+        element={!user ? <LoginPage /> : <Navigate to="/dashboard" replace />}
+      />
+      <Route path="/admin/login"
+        element={!user ? <AdminLoginPage /> : <Navigate to="/admin" replace />}
+      />
       <Route path="/admin/*"
         element={
-          !user     ? <Navigate to="/admin/login" replace /> :
-          !isAdmin  ? <Navigate to="/dashboard"   replace /> :
+          !user    ? <Navigate to="/admin/login" replace /> :
+          !isAdmin ? <Navigate to="/dashboard"   replace /> :
           <AdminApp user={user} />
         }
       />
       <Route path="/*"
         element={
-          !user    ? <Navigate to="/login" replace /> :
-          isAdmin  ? <Navigate to="/admin" replace /> :
+          !user   ? <Navigate to="/login" replace /> :
+          isAdmin ? <Navigate to="/admin" replace /> :
           <ClientApp user={user} />
         }
       />
