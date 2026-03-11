@@ -1,30 +1,16 @@
-import { useState, useEffect } from 'react';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '../firebase';
+import { useMemo } from 'react';
 
+// Checks admin purely from env variable — no Firestore read needed
+// Add VITE_ADMIN_EMAILS=email1@x.com,email2@x.com in Vercel env vars
 export function useAdmin(user) {
-  const [isAdmin,  setIsAdmin]  = useState(false);
-  const [loading,  setLoading]  = useState(true);
-
-  useEffect(() => {
-    if (!user?.email) { setLoading(false); return; }
-
-    async function check() {
-      try {
-        const q    = query(
-          collection(db, 'adminUsers'),
-          where('email', '==', user.email)
-        );
-        const snap = await getDocs(q);
-        setIsAdmin(!snap.empty);
-      } catch {
-        setIsAdmin(false);
-      } finally {
-        setLoading(false);
-      }
-    }
-    check();
+  const isAdmin = useMemo(() => {
+    if (!user?.email) return false;
+    const adminEmails = (import.meta.env.VITE_ADMIN_EMAILS || '')
+      .split(',')
+      .map(e => e.trim().toLowerCase())
+      .filter(Boolean);
+    return adminEmails.includes(user.email.toLowerCase());
   }, [user?.email]);
 
-  return { isAdmin, loading };
+  return { isAdmin, loading: false };
 }
