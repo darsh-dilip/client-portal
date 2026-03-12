@@ -1,58 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut } from 'firebase/auth';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { auth, db } from '../firebase';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { auth } from '../firebase';
 import { ShieldCheck } from 'lucide-react';
 
 const provider = new GoogleAuthProvider();
 
 export default function LoginPage() {
-  const [stage,  setStage]  = useState('loading'); // start loading to check redirect result
+  const [stage,  setStage]  = useState('idle');
   const [errMsg, setErrMsg] = useState('');
   const navigate = useNavigate();
 
-  // ── On mount: check if we're returning from a Google redirect ────────
-  useEffect(() => {
-    getRedirectResult(auth)
-      .then(async result => {
-        if (!result) {
-          // No redirect in progress — just show the login button
-          setStage('idle');
-          return;
-        }
-
-        const email = result.user.email;
-
-        // Validate: email must exist in the clients collection
-        const snap = await getDocs(
-          query(collection(db, 'clients'), where('email', '==', email))
-        );
-
-        if (snap.empty) {
-          await signOut(auth);
-          setStage('error');
-          setErrMsg(
-            `"${email}" is not registered as a client. ` +
-            `Please contact BizExpress to get access, or try a different Google account.`
-          );
-          return;
-        }
-
-        navigate('/dashboard');
-      })
-      .catch(err => {
-        setStage('error');
-        setErrMsg(err.message);
-      });
-  }, []);
-
   async function handleGoogleSignIn() {
     setStage('loading');
-    setErrMsg('');
     try {
-      // Redirects to Google — page returns with result handled in useEffect above
-      await signInWithRedirect(auth, provider);
+      await signInWithPopup(auth, provider);
+      navigate('/dashboard');
     } catch (err) {
       setStage('error');
       setErrMsg(err.message);
@@ -142,7 +105,7 @@ export default function LoginPage() {
         {stage === 'loading' ? (
           <div style={{ textAlign: 'center', padding: '1rem 0' }}>
             <div className="spinner" style={{ margin: '0 auto 1rem' }} />
-            <p style={{ color: 'var(--slate-light)', fontSize: '.88rem' }}>Verifying your access...</p>
+            <p style={{ color: 'var(--slate-light)', fontSize: '.88rem' }}>Signing you in...</p>
           </div>
         ) : (
           <button
