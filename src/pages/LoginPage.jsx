@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { auth } from '../firebase';
+import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { auth, db } from '../firebase';
 import { ShieldCheck } from 'lucide-react';
 
 const provider = new GoogleAuthProvider();
@@ -13,12 +14,35 @@ export default function LoginPage() {
 
   async function handleGoogleSignIn() {
     setStage('loading');
+    setErrMsg('');
+    let rejected = false;
     try {
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      const email  = result.user.email;
+
+      // ── Validate: email must exist in the clients collection ──────────
+      const snap = await getDocs(
+        query(collection(db, 'clients'), where('email', '==', email))
+      );
+
+      if (snap.empty) {
+        // Not a registered client — sign out immediately and show error
+        await signOut(auth);
+        rejected = true;
+        setStage('error');
+        setErrMsg(
+          `"${email}" is not registered as a client. ` +
+          `Please contact BizExpress to get access, or try a different Google account.`
+        );
+        return;
+      }
+
       navigate('/dashboard');
     } catch (err) {
-      setStage('error');
-      setErrMsg(err.message);
+      if (!rejected) {
+        setStage('error');
+        setErrMsg(err.message);
+      }
     }
   }
 
@@ -105,7 +129,7 @@ export default function LoginPage() {
         {stage === 'loading' ? (
           <div style={{ textAlign: 'center', padding: '1rem 0' }}>
             <div className="spinner" style={{ margin: '0 auto 1rem' }} />
-            <p style={{ color: 'var(--slate-light)', fontSize: '.88rem' }}>Signing you in...</p>
+            <p style={{ color: 'var(--slate-light)', fontSize: '.88rem' }}>Verifying your access...</p>
           </div>
         ) : (
           <button
