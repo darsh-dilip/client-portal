@@ -827,9 +827,9 @@ export default function AdminPanel({ user }) {
   async function handleLogout() { await signOut(auth); navigate('/admin/login'); }
 
   return (
-    <div style={{ minHeight:'100vh', background:'var(--navy)', display:'flex' }}>
-      {/* Sidebar */}
-      <aside style={{ width:220, background:'var(--navy-mid)', borderRight:'1px solid rgba(201,168,76,.1)', display:'flex', flexDirection:'column', padding:'1.5rem 0', flexShrink:0 }}>
+    <div style={{ height:'100vh', overflow:'hidden', background:'var(--navy)', display:'flex' }}>
+      {/* Sidebar — fixed height, never scrolls with content */}
+      <aside style={{ width:220, height:'100vh', overflowY:'auto', background:'var(--navy-mid)', borderRight:'1px solid rgba(201,168,76,.1)', display:'flex', flexDirection:'column', padding:'1.5rem 0', flexShrink:0 }}>
         <div style={{ padding:'0 1.25rem 1.1rem', borderBottom:'1px solid rgba(201,168,76,.08)' }}>
           <div style={{ fontFamily:'var(--font-display)', fontSize:'1.15rem', color:'var(--gold)' }}>ComplianceDesk</div>
           <div style={{ fontSize:'.68rem', color:'#6fa9e8', marginTop:'.15rem', letterSpacing:'.08em', textTransform:'uppercase' }}>Admin Panel</div>
@@ -860,8 +860,8 @@ export default function AdminPanel({ user }) {
         </div>
       </aside>
 
-      {/* Main */}
-      <main style={{ flex:1, padding:'1.75rem 2rem', overflowY:'auto', minWidth:0 }}>
+      {/* Main — scrolls independently */}
+      <main style={{ flex:1, height:'100vh', overflowY:'auto', padding:'1.75rem 2rem', minWidth:0 }}>
         {loading && activeTab!=='audit' ? (
           <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'60vh' }}>
             <div className="spinner"/>
